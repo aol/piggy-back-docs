@@ -1,0 +1,13 @@
+{
+    "name"         : "doc-generator",
+    "version"      : "0.0.1",
+    "main"         : "server.js",
+    "author"       : "Dan Michaelis",
+    "dependencies" : {
+        "express"    : "latest",
+        "request"    : "latest",
+        "cheerio"    : "latest",
+        "fs"         : "latest",
+	"requires": "latest"
+    }
+}
