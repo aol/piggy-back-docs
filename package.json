@@ -4,10 +4,13 @@
     "main"         : "docGenerator.js",
     "author"       : "Dan Michaelis",
     "dependencies" : {
-        "express"    : "latest",
-        "request"    : "latest",
-        "cheerio"    : "latest",
+        "connect"         : "latest",
+        "serve-static"         : "latest",
         "fs"         : "latest",
-	"requires": "latest"
+        "glob"       : "latest",
+	    "requires"   : "latest",
+        "lodash"   : "latest",
+        "jquery"   : "latest",
+        "jsdom": "^3.0.0"
     }
 }

@@ -5,15 +5,17 @@ var glob = require('glob'),
     $ = require('jquery')(require("jsdom").jsdom().parentWindow),
     _ = require('lodash');
 
-function generateDocFromFile(fileName, path) {
+module.exports = function (fileName, path) {
 
     fs.readFile(fileName, "UTF-8", function (err, fileContent) {
+        console.log(fileContent)
         var docObject = processInputFile(fileContent);
         var docHTML = generateDoc(docObject);
         var fileHTML = "<html><head><style>.functionBlock{border: 1px solid #000; margin-top: 10px;}.titleText{font-size: 20px; font-weight: 600; width: 100%; height: 25px; background-color: grey; color: white; padding: 2px;}.itText{font-size: 15px; margin: 10px 2px;}.codeBlock{background-color: #f5f2f0;}.setup{color: #888; font-size: 15px;}.example{color: #000; font-size: 16px;}.expect{color: #333; font-size: 14px; padding-left: 15px;}</style></head><body>" + docHTML + "</body></html>";
+        console.log(fileHTML);
         fs.writeFile(path, fileHTML);
     });
-}
+};
 
 function processInputFile(fileText) {
     var doc = [];
@@ -154,5 +156,3 @@ function formatCodeBlock(codeBlock) {
     });
     return unitExtracted
 }
-
-module.exports = generateDocFromFile;
