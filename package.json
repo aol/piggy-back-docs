@@ -1,7 +1,7 @@
 {
     "name"         : "doc-generator",
     "version"      : "0.0.1",
-    "main"         : "server.js",
+    "main"         : "docGenerator.js",
     "author"       : "Dan Michaelis",
     "dependencies" : {
         "express"    : "latest",
