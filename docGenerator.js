@@ -6,7 +6,6 @@ var glob = require('glob'),
     _ = require('lodash');
 
 module.exports = function (fileName, path) {
-
     fs.readFile(fileName, "UTF-8", function (err, fileContent) {
         console.log(fileContent)
         var docObject = processInputFile(fileContent);
