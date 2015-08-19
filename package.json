@@ -11,6 +11,7 @@
 	    "requires"   : "latest",
         "lodash"   : "latest",
         "jquery"   : "latest",
+        "jade"   : "latest",
         "jsdom": "^3.0.0"
     }
 }
