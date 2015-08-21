@@ -12,6 +12,7 @@ var blockRegEx = /\'(.*)\', function \(\) {\n((.|\s)*)\n\s*}(\)\);|\);)/,
     spaceRegEx = /^\s*\/\/@space/;
 
 var generateCodeBlock = jade.compileFile('./codeBlock.jade');
+var generateDocHTML = jade.compileFile('./docTemplate.jade');
 
 module.exports = function (fileName, callBack) {
     fs.readFile(fileName, "UTF-8", function (err, fileContent) {
@@ -54,41 +55,27 @@ function processBlock(block) {
 function generateDoc(docObject) {
     var doc = $('<div />', {class: 'doc'});
     var title = docObject.shift();
-    doc.append(titleTextTemplate(title.text));
-    _.each(docObject, function (block) {
-        var functionBlock = functionBlockTemplate()
-            .append(titleTextTemplate(block.text))
-            .append(itTextTemplate(block.contents.text))
-            .append(transformCodeArray(formatCodeBlock(block.contents.code)));
-        functionBlock.appendTo(doc);
+    var docText =_.map(docObject, function (block) {
+        return {
+            "title": titleTextTemplate(block.text),
+            "description": itTextTemplate(block.contents.text),
+            "code": transformCodeArray(formatCodeBlock(block.contents.code))
+        }
     });
-    return doc.html()
+    var docHTML = generateDocHTML({"docTitle":title, "docText": docText});
+    return docHTML;
 }
 
-function functionBlockTemplate() {
-    return $('<div />', {
-        class: 'functionBlock'
-    });
+function functionBlockTemplate(block) {
+    return jade.compile('div.functionBlock #{title} #{description} #{code}')(block);
 }
 
 function titleTextTemplate(titleText) {
-    return $('<div />', {
-        class: 'titleText',
-        text: titleText
-    });
+    return jade.compile('div.titleText #{titleText}')({"titleText": titleText});
 }
 
 function itTextTemplate(itText) {
-    return $('<div />', {
-        class: 'itText',
-        text: itText
-    });
-}
-
-function codeBlockTemplate() {
-    return $('<div />', {
-        class: 'codeBlock language-javascript'
-    });
+    return jade.compile('div.itText #{itText}')({"itText": itText});
 }
 
 function formatExpect(textBlock) {
@@ -107,33 +94,22 @@ function formatExpect(textBlock) {
 }
 
 function transformCodeArray(codeList) {
-    //generateCodeBlock({class:'', text:''});
-    //var block = jade.compile('div.codeBlock !{moreHTML}', {pretty: true});
-    //var testBlock = codeBlockTemplate();
-    //console.log("TESTBLOCK", testBlock.html());
-    //var elm = $('<div />');
     var type = '';
     var text = '';
-    //var innerHTML = '';
-    var codeSections = []
+    var codeSections = [];
     _.forEach(codeList, function (line) {
         if (type === line[0]) {
             if (type === 'expect') {
                 line[1] = formatExpect(line[1]);
             }
             text += line[1];
-            //elm.text(elm.text() + line[1]);
         } else {
-            //innerHTML += generateCodeBlock({className:type, text:text});
             codeSections.push({className:type, text:text});
-            //testBlock.append(elm);
             type = line[0];
-            //elm = $('<div />').addClass(type);
             if (type === 'expect') {
                 line[1] = formatExpect(line[1]);
             }
             text = line[1];
-           //elm.text(line[1]);
         }
     });
     return generateCodeBlock({"code": codeSections});
