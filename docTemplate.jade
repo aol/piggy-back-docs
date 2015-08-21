@@ -1,9 +1,6 @@
 block documentation
     div.doc
         div.titleText
-            #{docTitle}
-        for function in docText
-            div.functionBlock
-                #{title}
-                #{description}
-                #{code}
+            div #{docTitle}
+            for block in docText
+                div.functionBlock !{block.title} !{block.description} !{block.code}

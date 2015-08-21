@@ -13,7 +13,9 @@ var blockRegEx = /\'(.*)\', function \(\) {\n((.|\s)*)\n\s*}(\)\);|\);)/,
 
 var generateCodeBlock = jade.compileFile('./codeBlock.jade');
 var generateDocHTML = jade.compileFile('./docTemplate.jade');
-
+//function generateDocHTML (obj) {
+//    console.log(JSON.stringify(obj));
+//}
 module.exports = function (fileName, callBack) {
     fs.readFile(fileName, "UTF-8", function (err, fileContent) {
         //console.log(fileContent)
@@ -62,6 +64,7 @@ function generateDoc(docObject) {
             "code": transformCodeArray(formatCodeBlock(block.contents.code))
         }
     });
+    //console.log(docText);
     var docHTML = generateDocHTML({"docTitle":title, "docText": docText});
     return docHTML;
 }
