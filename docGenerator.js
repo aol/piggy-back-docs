@@ -19,7 +19,6 @@ module.exports = function (fileName, callBack) {
 };
 
 function processInputFile(fileText) {
-
     var newDescribeBlocks = splitIntoBlocks(fileText, 'describe');
     return  _.map(newDescribeBlocks, function (block) {
         var processedBlock = processBlock(block);
@@ -55,7 +54,6 @@ function generateDoc(docObject) {
             "code": transformCodeArray(formatCodeBlock(block.contents.code))
         }
     });
-    console.log(docText)
     return generateDocHTML({"docTitle":title, "docText": docText});
 }
 

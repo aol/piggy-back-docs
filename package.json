@@ -8,6 +8,6 @@
         "glob"          : "latest",
 	    "requires"      : "latest",
         "lodash"        : "latest",
-        "jade"          : "latest",
+        "jade"          : "latest"
     }
 }
