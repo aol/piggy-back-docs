@@ -2,7 +2,8 @@
 
 var fs = require('fs'),
     $ = require('jquery')(require("jsdom").jsdom().parentWindow),
-    _ = require('lodash');
+    _ = require('lodash'),
+    jade = require('jade');
 
 var blockRegEx = /\'(.*)\', function \(\) {\n((.|\s)*)\n\s*}(\)\);|\);)/,
     setupRegEx = /^\s*\/\/@setup/,
@@ -10,9 +11,11 @@ var blockRegEx = /\'(.*)\', function \(\) {\n((.|\s)*)\n\s*}(\)\);|\);)/,
     expectRegEx = /^\s*expect/,
     spaceRegEx = /^\s*\/\/@space/;
 
+var generateCodeBlock = jade.compileFile('./codeBlock.jade');
+
 module.exports = function (fileName, callBack) {
     fs.readFile(fileName, "UTF-8", function (err, fileContent) {
-        console.log(fileContent)
+        //console.log(fileContent)
         var docObject = processInputFile(fileContent);
         var docHTML = generateDoc(docObject);
         var fileHTML = '<html><head><style>.functionBlock{border: 1px solid #000; margin-top: 10px;}.titleText{font-size: 20px; font-weight: 600; width: 100%; height: 25px; background-color: grey; color: white; padding: 2px;}.itText{font-size: 15px; margin: 10px 2px;}.codeBlock{background-color: #f5f2f0;}.setup{color: #888; font-size: 15px;}.example{color: #000; font-size: 16px;}.expect{color: #333; font-size: 14px; padding-left: 15px;}</style></head><body>' + docHTML + '</body></html>';
@@ -83,7 +86,7 @@ function itTextTemplate(itText) {
 }
 
 function codeBlockTemplate() {
-    return $('<pre />', {
+    return $('<div />', {
         class: 'codeBlock language-javascript'
     });
 }
@@ -104,56 +107,99 @@ function formatExpect(textBlock) {
 }
 
 function transformCodeArray(codeList) {
-    var testBlock = codeBlockTemplate();
-    var elm = $('<div />');
+    //generateCodeBlock({class:'', text:''});
+    //var block = jade.compile('div.codeBlock !{moreHTML}', {pretty: true});
+    //var testBlock = codeBlockTemplate();
+    //console.log("TESTBLOCK", testBlock.html());
+    //var elm = $('<div />');
     var type = '';
+    var text = '';
+    //var innerHTML = '';
+    var codeSections = []
     _.forEach(codeList, function (line) {
         if (type === line[0]) {
             if (type === 'expect') {
                 line[1] = formatExpect(line[1]);
             }
-            elm.text(elm.text() + line[1]);
+            text += line[1];
+            //elm.text(elm.text() + line[1]);
         } else {
-            testBlock.append(elm);
+            //innerHTML += generateCodeBlock({className:type, text:text});
+            codeSections.push({className:type, text:text});
+            //testBlock.append(elm);
             type = line[0];
-            elm = $('<div />').addClass(type);
+            //elm = $('<div />').addClass(type);
             if (type === 'expect') {
                 line[1] = formatExpect(line[1]);
             }
-            elm.text(line[1]);
+            text = line[1];
+           //elm.text(line[1]);
         }
     });
-    return testBlock;
+    return generateCodeBlock({"code": codeSections});
 }
 
+//function formatCodeBlock(codeBlock) {
+//    var unit = codeBlock.split('\n');
+//    unit = _.map(unit, function (line) {
+//        return line.replace(/    /g, ' ');
+//    });
+//    var lastLineType = 'ignore';
+//    var unitExtracted = [];
+//    _.forEach(unit, function (line) {
+//        if (line && line.indexOf('//@ignore') < 0) {
+//            line += '\n';
+//            if (setupRegEx.exec(line)) {
+//                lastLineType = 'setup';
+//            } else if (exampleRegEx.exec(line)) {
+//                lastLineType = 'example';
+//            } else if (expectRegEx.exec(line) && lastLineType !== 'ignore') {
+//                lastLineType = 'expect';
+//                unitExtracted.push([lastLineType, line]);
+//            } else if (spaceRegEx.exec(line)) {
+//                unitExtracted.push(['space', '']);
+//            }
+//            else {
+//                if (lastLineType !== 'expect' && lastLineType !== 'ignore') {
+//                    unitExtracted.push([lastLineType, line]);
+//                } else {
+//                    lastLineType = 'ignore';
+//                }
+//            }
+//        }
+//    });
+//    return unitExtracted
+//}
+
 function formatCodeBlock(codeBlock) {
-    var unit = codeBlock.split('\n');
-    unit = _.map(unit, function (line) {
-        return line.replace(/    /g, ' ');
-    });
-    var lastLineType = 'ignore';
-    var unitExtracted = [];
-    _.forEach(unit, function (line) {
-        if (line && line.indexOf('//@ignore') < 0) {
-            line += '\n';
-            if (setupRegEx.exec(line)) {
-                lastLineType = 'setup';
-            } else if (exampleRegEx.exec(line)) {
-                lastLineType = 'example';
-            } else if (expectRegEx.exec(line) && lastLineType !== 'ignore') {
-                lastLineType = 'expect';
-                unitExtracted.push([lastLineType, line]);
-            } else if (spaceRegEx.exec(line)) {
-                unitExtracted.push(['space', '']);
-            }
-            else {
-                if (lastLineType !== 'expect' && lastLineType !== 'ignore') {
-                    unitExtracted.push([lastLineType, line]);
-                } else {
-                    lastLineType = 'ignore';
+    return _(codeBlock).
+        split('\n').
+        filter(function(l) { return l && !_.includes(l, '//@ignore'); }).
+        map(function(line) { return line.replace(/    /g, ' '); }).
+        reduce(function(unitExtracted, line) {
+            var tagMatch = this.tagRegex.exec(line);
+            if (tagMatch) {
+                switch(tagMatch[1]) {
+                    case 'space':
+                        unitExtracted.push(['space', '']);
+                        break;
+                    default:
+                        this.lastLineType = tagMatch[1];
                 }
+            } else if (this.lastLineType !== 'ignore') {
+                if (this.expectRegex.exec(line)) {
+                    this.lastLineType = 'expect';
+                    unitExtracted.push([ this.lastLineType, line + '\n' ]);
+                } else if (this.lastLineType !== 'expect') {
+                    unitExtracted.push([ this.lastLineType, line + '\n' ]);
+                } else {
+                    this.lastLineType = 'ignore';
+                }
+            } else {
+                this.lastLineType = 'ignore';
             }
-        }
-    });
-    return unitExtracted
+            return unitExtracted;
+        }, [ ], { lastLineType: 'ignore',
+            tagRegex: /^\s*\/\/@(\w+)/,
+            expectRegex: /^\s*expect\b/ });
 }
