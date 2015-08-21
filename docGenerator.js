@@ -1,24 +1,16 @@
 'use strict';
 
 var fs = require('fs'),
-    $ = require('jquery')(require("jsdom").jsdom().parentWindow),
     _ = require('lodash'),
     jade = require('jade');
 
-var blockRegEx = /\'(.*)\', function \(\) {\n((.|\s)*)\n\s*}(\)\);|\);)/,
-    setupRegEx = /^\s*\/\/@setup/,
-    exampleRegEx = /^\s*\/\/@example/,
-    expectRegEx = /^\s*expect/,
-    spaceRegEx = /^\s*\/\/@space/;
+var blockRegEx = /\'(.*)\', function \(\) {\n((.|\s)*)\n\s*}(\)\);|\);)/;
 
 var generateCodeBlock = jade.compileFile('./codeBlock.jade');
 var generateDocHTML = jade.compileFile('./docTemplate.jade');
-//function generateDocHTML (obj) {
-//    console.log(JSON.stringify(obj));
-//}
+
 module.exports = function (fileName, callBack) {
     fs.readFile(fileName, "UTF-8", function (err, fileContent) {
-        //console.log(fileContent)
         var docObject = processInputFile(fileContent);
         var docHTML = generateDoc(docObject);
         var fileHTML = '<html><head><style>.functionBlock{border: 1px solid #000; margin-top: 10px;}.titleText{font-size: 20px; font-weight: 600; width: 100%; height: 25px; background-color: grey; color: white; padding: 2px;}.itText{font-size: 15px; margin: 10px 2px;}.codeBlock{background-color: #f5f2f0;}.setup{color: #888; font-size: 15px;}.example{color: #000; font-size: 16px;}.expect{color: #333; font-size: 14px; padding-left: 15px;}</style></head><body>' + docHTML + '</body></html>';
@@ -55,8 +47,7 @@ function processBlock(block) {
 }
 
 function generateDoc(docObject) {
-    var doc = $('<div />', {class: 'doc'});
-    var title = docObject.shift();
+    var title = docObject.shift().text;
     var docText =_.map(docObject, function (block) {
         return {
             "title": titleTextTemplate(block.text),
@@ -64,13 +55,7 @@ function generateDoc(docObject) {
             "code": transformCodeArray(formatCodeBlock(block.contents.code))
         }
     });
-    //console.log(docText);
-    var docHTML = generateDocHTML({"docTitle":title, "docText": docText});
-    return docHTML;
-}
-
-function functionBlockTemplate(block) {
-    return jade.compile('div.functionBlock #{title} #{description} #{code}')(block);
+    return generateDocHTML({"docTitle":title, "docText": docText});
 }
 
 function titleTextTemplate(titleText) {
@@ -117,38 +102,6 @@ function transformCodeArray(codeList) {
     });
     return generateCodeBlock({"code": codeSections});
 }
-
-//function formatCodeBlock(codeBlock) {
-//    var unit = codeBlock.split('\n');
-//    unit = _.map(unit, function (line) {
-//        return line.replace(/    /g, ' ');
-//    });
-//    var lastLineType = 'ignore';
-//    var unitExtracted = [];
-//    _.forEach(unit, function (line) {
-//        if (line && line.indexOf('//@ignore') < 0) {
-//            line += '\n';
-//            if (setupRegEx.exec(line)) {
-//                lastLineType = 'setup';
-//            } else if (exampleRegEx.exec(line)) {
-//                lastLineType = 'example';
-//            } else if (expectRegEx.exec(line) && lastLineType !== 'ignore') {
-//                lastLineType = 'expect';
-//                unitExtracted.push([lastLineType, line]);
-//            } else if (spaceRegEx.exec(line)) {
-//                unitExtracted.push(['space', '']);
-//            }
-//            else {
-//                if (lastLineType !== 'expect' && lastLineType !== 'ignore') {
-//                    unitExtracted.push([lastLineType, line]);
-//                } else {
-//                    lastLineType = 'ignore';
-//                }
-//            }
-//        }
-//    });
-//    return unitExtracted
-//}
 
 function formatCodeBlock(codeBlock) {
     return _(codeBlock).

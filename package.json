@@ -4,14 +4,10 @@
     "main"         : "docGenerator.js",
     "author"       : "Dan Michaelis",
     "dependencies" : {
-        "connect"         : "latest",
-        "serve-static"         : "latest",
-        "fs"         : "latest",
-        "glob"       : "latest",
-	    "requires"   : "latest",
-        "lodash"   : "latest",
-        "jquery"   : "latest",
-        "jade"   : "latest",
-        "jsdom": "^3.0.0"
+        "fs"            : "latest",
+        "glob"          : "latest",
+	    "requires"      : "latest",
+        "lodash"        : "latest",
+        "jade"          : "latest",
     }
 }
