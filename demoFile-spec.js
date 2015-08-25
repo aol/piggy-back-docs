@@ -13,7 +13,7 @@ describe('demo test file', function () {
             };
             //@example
             var result = testFunction(json);
-            expect(result).toEqual('result')
+            expect(result).toEqual('result');
         });
     });
     describe('another function', function () {

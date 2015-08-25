@@ -20,7 +20,7 @@ module.exports = function (fileName, callBack) {
 
 function processInputFile(fileText) {
     var newDescribeBlocks = splitIntoBlocks(fileText, 'describe');
-    return  _.map(newDescribeBlocks, function (block) {
+    return _.map(newDescribeBlocks, function (block) {
         var processedBlock = processBlock(block);
         var describeContents = processedBlock.contents;
         var itBlocks = splitIntoBlocks(describeContents, /\sit\(/);
@@ -47,14 +47,14 @@ function processBlock(block) {
 
 function generateDoc(docObject) {
     var title = docObject.shift().text;
-    var docText =_.map(docObject, function (block) {
+    var docText = _.map(docObject, function (block) {
         return {
             "title": titleTextTemplate(block.text),
             "description": itTextTemplate(block.contents.text),
             "code": transformCodeArray(formatCodeBlock(block.contents.code))
         }
     });
-    return generateDocHTML({"docTitle":title, "docText": docText});
+    return generateDocHTML({"docTitle": title, "docText": docText});
 }
 
 function titleTextTemplate(titleText) {
@@ -91,7 +91,7 @@ function transformCodeArray(codeList) {
             }
             text += line[1];
         } else {
-            codeSections.push({className:type, text:text});
+            codeSections.push({className: type, text: text});
             type = line[0];
             if (type === 'expect') {
                 line[1] = formatExpect(line[1]);
@@ -103,14 +103,19 @@ function transformCodeArray(codeList) {
 }
 
 function formatCodeBlock(codeBlock) {
+    BformatCodeBlock(codeBlock);
     return _(codeBlock).
         split('\n').
-        filter(function(l) { return l && !_.includes(l, '//@ignore'); }).
-        map(function(line) { return line.replace(/    /g, ' '); }).
-        reduce(function(unitExtracted, line) {
+        filter(function (l) {
+            return l && !_.includes(l, '//@ignore');
+        }).
+        map(function (line) {
+            return line.replace(/    /g, ' ');
+        }).
+        reduce(function (unitExtracted, line) {
             var tagMatch = this.tagRegex.exec(line);
             if (tagMatch) {
-                switch(tagMatch[1]) {
+                switch (tagMatch[1]) {
                     case 'space':
                         unitExtracted.push(['space', '']);
                         break;
@@ -120,9 +125,9 @@ function formatCodeBlock(codeBlock) {
             } else if (this.lastLineType !== 'ignore') {
                 if (this.expectRegex.exec(line)) {
                     this.lastLineType = 'expect';
-                    unitExtracted.push([ this.lastLineType, line + '\n' ]);
+                    unitExtracted.push([this.lastLineType, line + '\n']);
                 } else if (this.lastLineType !== 'expect') {
-                    unitExtracted.push([ this.lastLineType, line + '\n' ]);
+                    unitExtracted.push([this.lastLineType, line + '\n']);
                 } else {
                     this.lastLineType = 'ignore';
                 }
@@ -130,7 +135,67 @@ function formatCodeBlock(codeBlock) {
                 this.lastLineType = 'ignore';
             }
             return unitExtracted;
-        }, [ ], { lastLineType: 'ignore',
+        }, [], {
+            lastLineType: 'ignore',
             tagRegex: /^\s*\/\/@(\w+)/,
-            expectRegex: /^\s*expect\b/ });
+            expectRegex: /^\s*expect\b/
+        });
 }
+
+function BformatCodeBlock(codeBlock) {
+    var codeArray = codeBlock.split('\n');
+    var formattedArray = _.filter(codeArray, function (l) {
+        return l && !_.includes(l, '//@space');
+    });
+    var restring = {transform: '', string: ''};
+    var transformedArr = [];
+    _.each(formattedArray, function (line) {
+        if (line.indexOf('//@ignore') === -1) {
+            _.each(configObj, function (option) {
+                if (option.tag.exec(line)) {
+                    if(restring.string) {
+                        transformedArr.push(restring.transform(restring.string));
+                    }
+                    restring.transform = option.transform;
+                    restring.string = '';
+                    if (line.indexOf('//') < 0) {
+                        transformedArr.push(restring.transform(line));
+                    }
+                    return false;
+                } else if (option.tag.exec('all')) {
+                    restring.string += line + '\n';
+                }
+            });
+        }
+    });
+    if(restring.string && restring.transform) {
+        transformedArr.push(restring.transform(restring.string));
+    }
+    console.log(transformedArr);
+    return transformedArr;
+}
+
+var configObj = [
+    {
+        tag: /\/\/@setup/,
+        transform: function (text) {
+            return jade.compile('div.setup !{text}')({'text': text});
+        }
+    }, {
+        tag: /\/\/@example/,
+        transform: function (text) {
+            return jade.compile('div.example !{text}')({'text': text});
+        }
+    }, {
+        tag: /(\s*)expect/,
+        rule: /(\s*)expect\((.*)\)\.(.*)\((.*)\)/,
+        template: '!div.expect {1} !{equality} !{2}',
+        transform: function (text) {
+            var parts = /(\s*)expect\((.*)\)\.(.*)\((.*)\)/.exec(text);
+            return jade.compile('div.expect #{actual} #{equality} #{expected}')({'actual': parts[1], 'equality': parts[3], 'expected': parts[2]});
+        }
+    }, {
+        tag: /all/
+    }
+
+];
