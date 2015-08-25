@@ -51,7 +51,7 @@ function generateDoc(docObject) {
         return {
             "title": titleTextTemplate(block.text),
             "description": itTextTemplate(block.contents.text),
-            "code": formatCodeBlock(block.contents.code) //transformCodeArray(formatCodeBlock(block.contents.code))
+            "code": formatCodeBlock(block.contents.code)
         }
     });
     return generateDocHTML({"docTitle": title, "docText": docText});
@@ -86,18 +86,19 @@ function formatCodeBlock(codeBlock) {
         return l && !_.includes(l, '//@space');
     });
     var restring = {transform: '', string: ''};
-    var transformedArr = [];
+    var transformStr = '';
     _.each(formattedArray, function (line) {
         if (line.indexOf('//@ignore') === -1) {
+            line = line.replace(/    /g, '  ');
             _.each(configObj, function (option) {
                 if (option.tag.exec(line)) {
                     if(restring.string) {
-                        transformedArr.push(restring.transform(restring.string));
+                        transformStr += restring.transform(restring.string);
                     }
                     restring.transform = option.transform;
                     restring.string = '';
                     if (line.indexOf('//') < 0) {
-                        transformedArr.push(restring.transform(line));
+                        transformStr += restring.transform(line);
                     }
                     return false;
                 } else if (option.tag.exec('all')) {
@@ -107,9 +108,9 @@ function formatCodeBlock(codeBlock) {
         }
     });
     if(restring.string && restring.transform) {
-        transformedArr.push(restring.transform(restring.string));
+        transformStr += restring.transform(restring.string);
     }
-    return generateCodeBlock({"code": transformedArr});
+    return generateCodeBlock({"code": transformStr});
 }
 
 var configObj = [
