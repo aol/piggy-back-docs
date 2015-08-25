@@ -51,7 +51,7 @@ function generateDoc(docObject) {
         return {
             "title": titleTextTemplate(block.text),
             "description": itTextTemplate(block.contents.text),
-            "code": transformCodeArray(formatCodeBlock(block.contents.code))
+            "code": formatCodeBlock(block.contents.code) //transformCodeArray(formatCodeBlock(block.contents.code))
         }
     });
     return generateDocHTML({"docTitle": title, "docText": docText});
@@ -80,69 +80,7 @@ function formatExpect(textBlock) {
     return text;
 }
 
-function transformCodeArray(codeList) {
-    var type = '';
-    var text = '';
-    var codeSections = [];
-    _.forEach(codeList, function (line) {
-        if (type === line[0]) {
-            if (type === 'expect') {
-                line[1] = formatExpect(line[1]);
-            }
-            text += line[1];
-        } else {
-            codeSections.push({className: type, text: text});
-            type = line[0];
-            if (type === 'expect') {
-                line[1] = formatExpect(line[1]);
-            }
-            text = line[1];
-        }
-    });
-    return generateCodeBlock({"code": codeSections});
-}
-
 function formatCodeBlock(codeBlock) {
-    BformatCodeBlock(codeBlock);
-    return _(codeBlock).
-        split('\n').
-        filter(function (l) {
-            return l && !_.includes(l, '//@ignore');
-        }).
-        map(function (line) {
-            return line.replace(/    /g, ' ');
-        }).
-        reduce(function (unitExtracted, line) {
-            var tagMatch = this.tagRegex.exec(line);
-            if (tagMatch) {
-                switch (tagMatch[1]) {
-                    case 'space':
-                        unitExtracted.push(['space', '']);
-                        break;
-                    default:
-                        this.lastLineType = tagMatch[1];
-                }
-            } else if (this.lastLineType !== 'ignore') {
-                if (this.expectRegex.exec(line)) {
-                    this.lastLineType = 'expect';
-                    unitExtracted.push([this.lastLineType, line + '\n']);
-                } else if (this.lastLineType !== 'expect') {
-                    unitExtracted.push([this.lastLineType, line + '\n']);
-                } else {
-                    this.lastLineType = 'ignore';
-                }
-            } else {
-                this.lastLineType = 'ignore';
-            }
-            return unitExtracted;
-        }, [], {
-            lastLineType: 'ignore',
-            tagRegex: /^\s*\/\/@(\w+)/,
-            expectRegex: /^\s*expect\b/
-        });
-}
-
-function BformatCodeBlock(codeBlock) {
     var codeArray = codeBlock.split('\n');
     var formattedArray = _.filter(codeArray, function (l) {
         return l && !_.includes(l, '//@space');
@@ -171,28 +109,25 @@ function BformatCodeBlock(codeBlock) {
     if(restring.string && restring.transform) {
         transformedArr.push(restring.transform(restring.string));
     }
-    console.log(transformedArr);
-    return transformedArr;
+    return generateCodeBlock({"code": transformedArr});
 }
 
 var configObj = [
     {
         tag: /\/\/@setup/,
         transform: function (text) {
-            return jade.compile('div.setup !{text}')({'text': text});
+            return jade.compile('code.setup !{text}')({'text': text});
         }
     }, {
         tag: /\/\/@example/,
         transform: function (text) {
-            return jade.compile('div.example !{text}')({'text': text});
+            return jade.compile('code.example !{text}')({'text': text});
         }
     }, {
         tag: /(\s*)expect/,
-        rule: /(\s*)expect\((.*)\)\.(.*)\((.*)\)/,
-        template: '!div.expect {1} !{equality} !{2}',
         transform: function (text) {
             var parts = /(\s*)expect\((.*)\)\.(.*)\((.*)\)/.exec(text);
-            return jade.compile('div.expect #{actual} #{equality} #{expected}')({'actual': parts[1], 'equality': parts[3], 'expected': parts[2]});
+            return jade.compile('code.expect #{actual} #{equality} #{expected}')({'actual': parts[2], 'equality': parts[3], 'expected': parts[4]});
         }
     }, {
         tag: /all/

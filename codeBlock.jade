@@ -1,4 +1,4 @@
 block codeBlock
     pre.codeBlock
-        for part in code
-            code(class="#{part.className}") !{part.text}
+        for line in code
+            div !{line}
