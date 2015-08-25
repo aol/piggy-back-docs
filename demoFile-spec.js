@@ -13,6 +13,9 @@ describe('demo test file', function () {
             };
             //@example
             var result = testFunction(json);
+            //@censor
+            var x = 123;
+            $rootScope.something = $rootScope.somehting.else;
             expect(result).toEqual('result');
         });
     });

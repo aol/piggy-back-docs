@@ -115,6 +115,28 @@ function formatCodeBlock(codeBlock) {
 
 var configObj = [
     {
+        tag: /(\s*)\$rootScope/,
+        transform: function (text) {
+            text = text.replace(/rootScope/g, 'scope');
+            return jade.compile('code.example !{text}')({'text': text});
+        }
+    }, {
+        tag: /\/\/@censor/,
+        transform: function (text) {
+            text = text.split(" ");
+            var newChars = ['~', '!', '!', '!', '@', '#',  '#', '#', '$', '%', '%', '^', '&', '*'];
+            var newStr = ' ';
+            _.each(text, function (elm) {
+                if(elm.match(/([a-z1-9]+)/)) {
+                    newStr += _.sample(newChars, elm.length) + '  ';
+                } else {
+                    newStr += elm + "  "
+                }
+            });
+            newStr = newStr.replace(/,/g, '');
+            return jade.compile('code.example !{text}')({'text': newStr});
+        }
+    }, {
         tag: /\/\/@setup/,
         transform: function (text) {
             return jade.compile('code.setup !{text}')({'text': text});
