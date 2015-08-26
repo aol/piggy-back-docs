@@ -95,10 +95,11 @@ function formatCodeBlock(codeBlock) {
                     if(restring.string) {
                         transformStr += restring.transform(restring.string);
                     }
-                    restring.transform = option.transform;
                     restring.string = '';
-                    if (line.indexOf('//') < 0) {
-                        transformStr += restring.transform(line);
+                    if (line.indexOf('//') < 0 || option.inLine) {
+                        transformStr += option.transform(line);
+                    } else {
+                        restring.transform = option.transform;
                     }
                     return false;
                 } else if (option.tag.exec('all')) {
@@ -117,7 +118,7 @@ var configObj = [
     {
         tag: /(\s*)\$rootScope/,
         transform: function (text) {
-            text = text.replace(/rootScope/g, 'scope');
+            text = text.replace(/rootScope/g, 'scope') + '\n';
             return jade.compile('code.example !{text}')({'text': text});
         }
     }, {
@@ -133,7 +134,7 @@ var configObj = [
                     newStr += elm + "  "
                 }
             });
-            newStr = newStr.replace(/,/g, '');
+            newStr = newStr.replace(/,/g, '') + '\n';
             return jade.compile('code.example !{text}')({'text': newStr});
         }
     }, {
@@ -150,7 +151,7 @@ var configObj = [
         tag: /(\s*)expect/,
         transform: function (text) {
             var parts = /(\s*)expect\((.*)\)\.(.*)\((.*)\)/.exec(text);
-            return jade.compile('code.expect #{actual} #{equality} #{expected}')({'actual': parts[2], 'equality': parts[3], 'expected': parts[4]});
+            return jade.compile('code.expect #{actual} #{equality} #{expected}')({'actual': parts[2], 'equality': parts[3], 'expected': parts[4] + '\n'});
         }
     }, {
         tag: /all/

@@ -11,12 +11,13 @@ describe('demo test file', function () {
                 labelA: 'a',
                 labelB: 2
             };
-            //@example
-            var result = testFunction(json);
             //@censor
             var x = 123;
             $rootScope.something = $rootScope.somehting.else;
+            //@example
+            var result = testFunction(json);
             expect(result).toEqual('result');
+            var result = testFunction(json);
         });
     });
     describe('another function', function () {
