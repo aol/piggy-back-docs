@@ -13,7 +13,7 @@ module.exports = function (fileName, callBack) {
     fs.readFile(fileName, "UTF-8", function (err, fileContent) {
         var docObject = processInputFile(fileContent);
         var docHTML = generateDoc(docObject);
-        var fileHTML = '<html><head><style>.functionBlock{border: 1px solid #000; margin-top: 10px;}.titleText{font-size: 20px; font-weight: 600; width: 100%; height: 25px; background-color: grey; color: white; padding: 2px;}.itText{font-size: 15px; margin: 10px 2px; color: black;}.codeBlock{background-color: #f5f2f0;}.setup{color: #888; font-size: 15px;}.example{color: #000; font-size: 16px;}.expect{color: #333; font-size: 14px; padding-left: 15px;}</style></head><body>' + docHTML + '</body></html>';
+        var fileHTML = '<html><head><style>.functionBlock{border: 1px solid #000; margin-top: 10px;}.titleText{font-size: 20px; font-weight: 600; width: 100%; height: 25px; background-color: grey; color: white; padding: 2px;}.itText{font-size: 15px; margin: 10px 2px; color: black;}.codeBlock{background-color: #f5f2f0;}.setup{color: #888; font-size: 15px;}.censor{color: red}.example{color: #000; font-size: 16px;}.expect{color: #333; font-size: 14px; padding-left: 15px;}</style></head><body>' + docHTML + '</body></html>';
         callBack(fileHTML);
     });
 };
@@ -134,8 +134,8 @@ var configObj = [
                     newStr += elm + "  "
                 }
             });
-            newStr = newStr.replace(/,/g, '') + '\n';
-            return jade.compile('code.example !{text}')({'text': newStr});
+            newStr = newStr.replace(/,/g, '').replace(/  /g, ' ') + '\n';
+            return jade.compile('code.censor !{text}')({'text': newStr});
         }
     }, {
         tag: /\/\/@setup/,
@@ -151,7 +151,7 @@ var configObj = [
         tag: /(\s*)expect/,
         transform: function (text) {
             var parts = /(\s*)expect\((.*)\)\.(.*)\((.*)\)/.exec(text);
-            return jade.compile('code.expect #{actual} #{equality} #{expected}')({'actual': parts[2], 'equality': parts[3], 'expected': parts[4] + '\n'});
+            return jade.compile('code.expect #{spacing} #{actual} #{equality} #{expected}')({'spacing': parts[1], 'actual': parts[2], 'equality': parts[3], 'expected': parts[4] + '\n'});
         }
     }, {
         tag: /all/
