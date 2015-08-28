@@ -27,6 +27,7 @@ describe('demo test file', function () {
                 labelB: 2
             };
             var result = testFunction(json);
+            expect(result).toEqual('result'); //@ignore
         });
     });
 });

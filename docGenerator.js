@@ -2,12 +2,10 @@
 
 var fs = require('fs'),
     _ = require('lodash'),
-    jade = require('jade');
+    jade = require('jade'),
+    configObj = require('./configurations');
 
 var blockRegEx = /\'(.*)\', function \(\) {\n((.|\s)*)\n\s*}(\)\);|\);)/;
-
-var generateCodeBlock = jade.compileFile('./codeBlock.jade');
-var generateDocHTML = jade.compileFile('./docTemplate.jade');
 
 module.exports = function (fileName, callBack) {
     fs.readFile(fileName, "UTF-8", function (err, fileContent) {
@@ -54,7 +52,7 @@ function generateDoc(docObject) {
             "code": formatCodeBlock(block.contents.code)
         }
     });
-    return generateDocHTML({"docTitle": title, "docText": docText});
+    return jade.compileFile('./docTemplate.jade')({"docTitle": title, "docText": docText});
 }
 
 function titleTextTemplate(titleText) {
@@ -63,21 +61,6 @@ function titleTextTemplate(titleText) {
 
 function itTextTemplate(itText) {
     return jade.compile('div.itText #{itText}')({"itText": itText});
-}
-
-function formatExpect(textBlock) {
-    var expectExtraction = /(\s*)expect\((.*)\)\.(.*)\((.*)\)/.exec(textBlock);
-    var text = '';
-    if (expectExtraction[3].indexOf('toBe') > -1 || expectExtraction[3].indexOf('toEqual') > -1) {
-        if (expectExtraction[3].indexOf('not') > -1) {
-            text = expectExtraction[1] + expectExtraction[2] + ' !=== ' + expectExtraction[4] + '\n';
-        } else {
-            text = expectExtraction[1] + expectExtraction[2] + ' === ' + expectExtraction[4] + '\n';
-        }
-    } else if (expectExtraction[3].indexOf('toHaveBeenCalled') > -1) {
-        text = expectExtraction[1] + expectExtraction[2] + '()' + '\n';
-    }
-    return text;
 }
 
 function formatCodeBlock(codeBlock) {
@@ -92,7 +75,7 @@ function formatCodeBlock(codeBlock) {
             line = line.replace(/    /g, '  ');
             _.each(configObj, function (option) {
                 if (option.tag.exec(line)) {
-                    if(restring.string) {
+                    if(restring.string && restring.transform) {
                         transformStr += restring.transform(restring.string);
                     }
                     restring.string = '';
@@ -111,50 +94,5 @@ function formatCodeBlock(codeBlock) {
     if(restring.string && restring.transform) {
         transformStr += restring.transform(restring.string);
     }
-    return generateCodeBlock({"code": transformStr});
+    return jade.compileFile('./codeBlock.jade')({"code": transformStr});
 }
-
-var configObj = [
-    {
-        tag: /(\s*)\$rootScope/,
-        transform: function (text) {
-            text = text.replace(/rootScope/g, 'scope') + '\n';
-            return jade.compile('code.example !{text}')({'text': text});
-        }
-    }, {
-        tag: /\/\/@censor/,
-        transform: function (text) {
-            text = text.split(" ");
-            var newChars = ['~', '!', '!', '!', '@', '#',  '#', '#', '$', '%', '%', '^', '&', '*'];
-            var newStr = ' ';
-            _.each(text, function (elm) {
-                if(elm.match(/([a-z1-9]+)/)) {
-                    newStr += _.sample(newChars, elm.length) + '  ';
-                } else {
-                    newStr += elm + "  "
-                }
-            });
-            newStr = newStr.replace(/,/g, '').replace(/  /g, ' ') + '\n';
-            return jade.compile('code.censor !{text}')({'text': newStr});
-        }
-    }, {
-        tag: /\/\/@setup/,
-        transform: function (text) {
-            return jade.compile('code.setup !{text}')({'text': text});
-        }
-    }, {
-        tag: /\/\/@example/,
-        transform: function (text) {
-            return jade.compile('code.example !{text}')({'text': text});
-        }
-    }, {
-        tag: /(\s*)expect/,
-        transform: function (text) {
-            var parts = /(\s*)expect\((.*)\)\.(.*)\((.*)\)/.exec(text);
-            return jade.compile('code.expect #{spacing} #{actual} #{equality} #{expected}')({'spacing': parts[1], 'actual': parts[2], 'equality': parts[3], 'expected': parts[4] + '\n'});
-        }
-    }, {
-        tag: /all/
-    }
-
-];
