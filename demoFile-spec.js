@@ -11,6 +11,7 @@ describe('demo test file', function () {
                 labelA: 'a',
                 labelB: 2
             };
+            spyOn(testFunction) //@ignore
             //@censor
             var x = 123;
             //@example
