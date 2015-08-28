@@ -29,6 +29,7 @@ describe('demo test file', function () {
             };
             var result = testFunction(json);
             expect(result).toEqual('result'); //@ignore
+            expect(result)not.toEqual('something else'); //@ignore
         });
     });
 });
