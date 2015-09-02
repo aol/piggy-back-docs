@@ -11,7 +11,7 @@ describe('demo test file', function () {
                 labelA: 'a',
                 labelB: 2
             };
-            spyOn(testFunction) //@ignore
+            spyOn(testFunction); //@ignore
             //@censor
             var x = 123;
             //@example
@@ -29,7 +29,7 @@ describe('demo test file', function () {
             };
             var result = testFunction(json);
             expect(result).toEqual('result'); //@ignore
-            expect(result)not.toEqual('something else'); //@ignore
+            expect(result).not.toEqual('something else'); //@ignore
         });
     });
 });
