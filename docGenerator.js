@@ -2,17 +2,19 @@
 
 var fs = require('fs'),
     _ = require('lodash'),
-    jade = require('jade'),
-    configObj = require('./configurations');
+    jade = require('jade');
+var defaultConfigs = require('./defaultConfigurations');
+var configObj = '';
 
-var blockRegEx = /\'(.*)\', function \(\) {\n((.|\s)*)\n\s*}(\)\);|\);)/;
+var blockRegEx = /\'(.*)\', function \(\) {.*\n((.|\s)*)\n\s*}(\)\);|\);)/;
 
-module.exports = function (fileName, callBack) {
+module.exports = function (fileName, configSettings, callBack) {
+    configObj = configSettings.concat(defaultConfigs);
+    console.log(configObj);
     fs.readFile(fileName, "UTF-8", function (err, fileContent) {
         var docObject = processInputFile(fileContent);
         var docHTML = generateDoc(docObject);
-        var fileHTML = '<html><head><style>.functionBlock{border: 1px solid #000; margin-top: 10px;}.titleText{font-size: 20px; font-weight: 600; width: 100%; height: 25px; background-color: grey; color: white; padding: 2px;}.itText{font-size: 15px; margin: 10px 2px; color: black;}.codeBlock{background-color: #f5f2f0;}.setup{color: #888; font-size: 15px;}.censor{color: red}.example{color: #000; font-size: 16px;}.expect{color: #333; font-size: 14px; padding-left: 15px;}</style></head><body>' + docHTML + '</body></html>';
-        callBack(fileHTML);
+        callBack(docHTML);
     });
 };
 
@@ -52,7 +54,7 @@ function generateDoc(docObject) {
             "code": formatCodeBlock(block.contents.code)
         }
     });
-    return jade.compileFile('./docTemplate.jade')({"docTitle": title, "docText": docText});
+    return jade.compileFile('./templates/docTemplate.jade')({"docTitle": title, "docText": docText});
 }
 
 function titleTextTemplate(titleText) {
@@ -94,5 +96,5 @@ function formatCodeBlock(codeBlock) {
     if(restring.string && restring.transform) {
         transformStr += restring.transform(restring.string);
     }
-    return jade.compileFile('./codeBlock.jade')({"code": transformStr});
+    return jade.compileFile('./templates/codeBlock.jade')({"code": transformStr});
 }

@@ -23,24 +23,6 @@ var configObj = [
             newStr = newStr.replace(/,/g, '').replace(/  /g, ' ') + '\n';
             return jade.compile('code.censor !{text}')({'text': newStr});
         }
-    }, {
-        tag: /\/\/@setup/,
-        transform: function (text) {
-            return jade.compile('code.setup !{text}')({'text': text});
-        }
-    }, {
-        tag: /\/\/@example/,
-        transform: function (text) {
-            return jade.compile('code.example !{text}')({'text': text});
-        }
-    }, {
-        tag: /(\s*)expect/,
-        transform: function (text) {
-            var parts = /(\s*)expect\((.*)\)\.(.*)\((.*)\)/.exec(text);
-            return jade.compile('code.expect #{spacing} #{actual} #{equality} #{expected}')({'spacing': parts[1], 'actual': parts[2], 'equality': parts[3], 'expected': parts[4] + '\n'});
-        }
-    }, {
-        tag: /all/
     }
 ];
 
