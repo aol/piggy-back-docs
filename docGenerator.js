@@ -4,23 +4,35 @@ var fs = require('fs'),
     _ = require('lodash'),
     jade = require('jade');
 var defaultConfigs = require('./defaultConfigurations');
+var Promise = require('promise');
+
 var configObj = '';
 
 var blockRegEx = /\'(.*)\', function \(\) {.*\n((.|\s)*)\n\s*}(\)\);|\);)/;
 
-module.exports = function (fileName, configSettings, callBack) {
-    configObj = configSettings.concat(defaultConfigs);
-    console.log(configObj);
-    fs.readFile(fileName, "UTF-8", function (err, fileContent) {
-        var docObject = processInputFile(fileContent);
-        var docHTML = generateDoc(docObject);
-        callBack(docHTML);
+module.exports = function (fileName, configSettings) {
+    return new Promise(function (resolve, reject) {
+        configObj = configSettings.concat(defaultConfigs);
+        fs.readFile(fileName, "UTF-8", function (err, fileContent) {
+            var docObject = processInputFile(fileContent);
+            var docHTML = generateDoc(docObject);
+            resolve(docHTML);
+        });
     });
+
 };
+
+function extractTitle (blockStr) {
+    var match  = /\'(.*)\', function \(\)/.exec(blockStr);
+    return match[1];
+}
 
 function processInputFile(fileText) {
     var newDescribeBlocks = splitIntoBlocks(fileText, 'describe');
-    return _.map(newDescribeBlocks, function (block) {
+    var moduleTitle = extractTitle(newDescribeBlocks.shift());
+    var titleBlock = [{ text: moduleTitle, contents: { text: '', code: '' } }]
+
+    var processedBlocks = _.map(newDescribeBlocks, function (block) {
         var processedBlock = processBlock(block);
         var describeContents = processedBlock.contents;
         var itBlocks = splitIntoBlocks(describeContents, /\sit\(/);
@@ -32,6 +44,7 @@ function processInputFile(fileText) {
         });
         return processedBlock
     });
+    return titleBlock.concat(processedBlocks);
 }
 
 function splitIntoBlocks(text, key) {
@@ -42,6 +55,9 @@ function splitIntoBlocks(text, key) {
 
 function processBlock(block) {
     var match = blockRegEx.exec(block);
+    if(!match) {
+        throw block +' did not match the block regex '+ blockRegEx.toString();
+    }
     return {text: match[1], contents: match[2]};
 }
 
