@@ -1,17 +1,17 @@
 'use strict';
 
 var fs = require('fs'),
+    debug = require('./debug.js'),
     _ = require('lodash'),
-    jade = require('jade');
-var defaultConfigs = require('./defaultConfigurations');
-var Promise = require('promise');
+    jade = require('jade'),
+    defaultConfigs = require('./defaultConfigurations'),
+    Promise = require('promise'),
+    configObj = '',
+    blockRegEx = /\'(.*)\', function \(\) {.*\n((.|\s)*)\n\s*}(\)\);|\);)/;
 
-var configObj = '';
-
-var blockRegEx = /\'(.*)\', function \(\) {.*\n((.|\s)*)\n\s*}(\)\);|\);)/;
 
 module.exports = function (fileName, configSettings) {
-    return new Promise(function (resolve, reject) {
+    return new Promise(function (resolve) {
         configObj = configSettings.concat(defaultConfigs);
         fs.readFile(fileName, "UTF-8", function (err, fileContent) {
             var docObject = processInputFile(fileContent);
@@ -23,15 +23,16 @@ module.exports = function (fileName, configSettings) {
 };
 
 function extractTitle (blockStr) {
+    debug.log('extractTitle', 'thing');
     var match  = /\'(.*)\', function \(\)/.exec(blockStr);
     return match[1];
 }
 
 function processInputFile(fileText) {
+    debug.log('processInputFile', 'thing');
     var newDescribeBlocks = splitIntoBlocks(fileText, 'describe');
     var moduleTitle = extractTitle(newDescribeBlocks.shift());
-    var titleBlock = [{ text: moduleTitle, contents: { text: '', code: '' } }]
-
+    var titleBlock = [{ text: moduleTitle, contents: { text: '', code: '' } }];
     var processedBlocks = _.map(newDescribeBlocks, function (block) {
         var processedBlock = processBlock(block);
         var describeContents = processedBlock.contents;
@@ -40,7 +41,7 @@ function processInputFile(fileText) {
         _.each(itBlocks, function (itBlock) {
             var result = processBlock(itBlock);
             processedBlock.contents.text += result.text;
-            processedBlock.contents.code += (result.contents + '\n //@space');
+            processedBlock.contents.code += (result.contents + '\n');
         });
         return processedBlock
     });
@@ -48,12 +49,14 @@ function processInputFile(fileText) {
 }
 
 function splitIntoBlocks(text, key) {
+    debug.log('splitIntoBlocks');
     var blocks = text.split(key);
     blocks.shift();
     return blocks;
 }
 
 function processBlock(block) {
+    debug.log('processBlock');
     var match = blockRegEx.exec(block);
     if(!match) {
         throw block +' did not match the block regex '+ blockRegEx.toString();
@@ -62,6 +65,7 @@ function processBlock(block) {
 }
 
 function generateDoc(docObject) {
+    debug.log('docObject');
     var title = docObject.shift().text;
     var docText = _.map(docObject, function (block) {
         return {
@@ -74,21 +78,21 @@ function generateDoc(docObject) {
 }
 
 function titleTextTemplate(titleText) {
+    debug.log('titleTextTemplate');
     return jade.compile('div.titleText #{titleText}')({"titleText": titleText});
 }
 
 function itTextTemplate(itText) {
+    debug.log('itTextTemplate');
     return jade.compile('div.itText #{itText}')({"itText": itText});
 }
 
 function formatCodeBlock(codeBlock) {
+    debug.log('formatCodeBlock');
     var codeArray = codeBlock.split('\n');
-    var formattedArray = _.filter(codeArray, function (l) {
-        return l && !_.includes(l, '//@space');
-    });
     var restring = {transform: '', string: ''};
     var transformStr = '';
-    _.each(formattedArray, function (line) {
+    _.each(codeArray, function (line) {
         if (line.indexOf('//@ignore') === -1) {
             line = line.replace(/    /g, '  ');
             _.each(configObj, function (option) {

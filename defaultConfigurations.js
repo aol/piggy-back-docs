@@ -1,9 +1,13 @@
 var jade = require('jade'),
     _ = require('lodash');
+
+var debug = require('./debug.js');
+
 var configObj = [
     {
         tag: /\/\/@setup/,
         transform: function (text) {
+            debug.log("---setup");
             return jade.compile('code.setup !{text}')({'text': text});
         }
     }, {
