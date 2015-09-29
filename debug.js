@@ -12,7 +12,7 @@ module.exports = {
             grouping = '';
         }
         if(active) {
-            if(group === grouping) {
+            if(grouping.indexOf(group) > -1) {
                 console.log(label);
             }
         }

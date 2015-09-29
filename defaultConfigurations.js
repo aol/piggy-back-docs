@@ -7,7 +7,7 @@ var configObj = [
     {
         tag: /\/\/@setup/,
         transform: function (text) {
-            debug.log("---setup");
+            debug.log("---setup", ['config', 'test']);
             return jade.compile('code.setup !{text}')({'text': text});
         }
     }, {

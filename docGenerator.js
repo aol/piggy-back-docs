@@ -23,7 +23,7 @@ module.exports = function (fileName, configSettings) {
 };
 
 function extractTitle (blockStr) {
-    debug.log('extractTitle', 'thing');
+    debug.log('extractTitle', 'test');
     var match  = /\'(.*)\', function \(\)/.exec(blockStr);
     return match[1];
 }
